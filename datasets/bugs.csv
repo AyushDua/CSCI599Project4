@@ -1,0 +1,5 @@
+bug_id,module,category,description,trigger_input,expected_outcome
+CLEAN_CODEC,codec,none,No bug (baseline),hi,output=6869
+B001_CODEC,codec,logic,off-by-one in loop,hi,output_mismatch
+B002_CODEC,codec,boundary,wrong length passed from JS,hi,exception_or_wrong_output
+B003_CODEC,codec,trap,remove output size check,hi,trap_or_crash

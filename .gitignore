@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+
+# Build outputs
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+.ninja_*
+Testing/
+CTestTestfile.cmake
+
+# Downloaded toolchains / local tools
+.tools/
+
+# Node dependencies
+node_modules/
+
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+
+# Generated web build artifacts (do NOT commit)
+web/codec_web.js
+web/codec_web.wasm
+web/codec_web.worker.js
+web/*.wasm
+web/*.js.map
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Results (usually generated)
+results/*.json
+results/*.csv
+
+selfreadme.md

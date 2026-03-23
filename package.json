@@ -1,0 +1,10 @@
+{
+    "name": "wasm-topic4-mvp",
+    "private": true,
+    "devDependencies": {
+      "@playwright/test": "^1.50.0"
+    },
+    "scripts": {
+      "test:web": "playwright test"
+    }
+  }
