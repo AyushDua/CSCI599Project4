@@ -6,7 +6,7 @@ shift
 
 # args: bug_id layer runtime test_name outcome details
 BUG_ID="${1:?}"; LAYER="${2:?}"; RUNTIME="${3:?}"; TEST_NAME="${4:?}"
-OUTCOME="${5:?}"; FAILURE_KIND="${6:?}"; DETAILS="${7:-}"
+OUTCOME="${5:?}"; FAILURE_KIND="${6-}"; DETAILS="${7-}"
 
 mkdir -p "$(dirname "$CSV_FILE")"
 

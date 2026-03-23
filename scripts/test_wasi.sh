@@ -13,11 +13,20 @@ run_case () {
   local input_cmd="$3"
 
   local out err rc
-  out="$(bash -lc "$input_cmd" | wasmtime run "$WASM" 2> /tmp/wasi_err.txt | tr -d '\n')"
+  local errfile
+  errfile="$(mktemp -t wasi_err.XXXXXX)"
+
+  # Capture output + exit code safely even under set -e
+  set +e
+  out="$(bash -lc "$input_cmd" | wasmtime run "$WASM" 2> "$errfile" | tr -d '\n')"
   rc=$?
-  err="$(cat /tmp/wasi_err.txt)"
+  set -e
+
+  err="$(cat "$errfile")"
+  rm -f "$errfile"
 
   if [[ $rc -ne 0 ]]; then
+    # Wasmtime trap messages commonly include "wasm trap:" in stderr. :contentReference[oaicite:1]{index=1}
     if echo "$err" | grep -qi "wasm trap:"; then
       ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "fail" "trap" "$err"
     else
@@ -28,7 +37,8 @@ run_case () {
   fi
 
   if [[ "$out" == "$expected" ]]; then
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "pass" "" ""
+    # IMPORTANT: Don't pass empty failure_kind because log_csv.sh uses ${6:?}
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "pass" "none" ""
   else
     ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "fail" "output_mismatch" "expected=$expected actual=$out"
     FAIL=1
