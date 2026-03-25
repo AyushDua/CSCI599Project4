@@ -41,3 +41,5 @@ results/*.json
 results/*.csv
 
 selfreadme.md
+
+.claude/
