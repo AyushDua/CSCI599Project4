@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/.tools"
 mkdir -p "$TOOLS_DIR"
 
-# Detect macOS arch string expected by wasi-sdk releases.
+# Detect arch string expected by wasi-sdk releases.
 ARCH="$(uname -m)"
 if [[ "$ARCH" == "arm64" ]]; then
   WASI_ARCH="arm64"
@@ -17,7 +17,17 @@ else
   exit 1
 fi
 
-WASI_OS="macos"
+# Detect OS for release artifact naming.
+KERNEL="$(uname -s)"
+if [[ "$KERNEL" == "Darwin" ]]; then
+  WASI_OS="macos"
+elif [[ "$KERNEL" == "Linux" ]]; then
+  WASI_OS="linux"
+else
+  echo "Unsupported OS kernel: $KERNEL"
+  echo "Use a macOS/Linux shell (including WSL) to install wasi-sdk for this project."
+  exit 1
+fi
 
 # Get latest WASI SDK major version number from GitHub API (e.g., wasi-sdk-27).
 LATEST_TAG="$(curl -s https://api.github.com/repos/WebAssembly/wasi-sdk/releases/latest | \
