@@ -4,7 +4,7 @@ set -euo pipefail
 BUG_ID="${BUG_ID:-CLEAN_CODEC}"
 CSV="results/run_results.csv"
 WASM="build/wasi/codec_wasi.wasm"
-WASI_MODE="${WASI_MODE:-fast}"   # fast or full
+WASI_MODE="${WASI_MODE:-full}"   # fast or full
 
 # Coverage knobs (override per run as needed).
 if [[ "$WASI_MODE" == "full" ]]; then
