@@ -47,6 +47,36 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 2
 fi
 
+CASE_SOURCE="tests/integrations/layer2_wasi_cases.cpp"
+CASE_BIN="build/host/layer2_wasi_cases"
+
+if [[ ! -f "$CASE_SOURCE" ]]; then
+  echo "Missing Layer 2 test definitions: $CASE_SOURCE"
+  exit 2
+fi
+
+build_case_generator () {
+  local compiler=""
+
+  if command -v c++ >/dev/null 2>&1; then
+    compiler="$(command -v c++)"
+  elif command -v g++ >/dev/null 2>&1; then
+    compiler="$(command -v g++)"
+  elif command -v clang++ >/dev/null 2>&1; then
+    compiler="$(command -v clang++)"
+  else
+    echo "No C++ compiler found for Layer 2 case generator"
+    exit 2
+  fi
+
+  mkdir -p "$(dirname "$CASE_BIN")"
+  "$compiler" -std=c++17 -O2 "$CASE_SOURCE" -o "$CASE_BIN"
+}
+
+if [[ ! -x "$CASE_BIN" || "$CASE_SOURCE" -nt "$CASE_BIN" ]]; then
+  build_case_generator
+fi
+
 preview_hex () {
   local hex="$1"
   local max_chars=32
@@ -131,89 +161,13 @@ PY
   fi
 }
 
-declare -a CASE_NAMES=()
-declare -a CASE_HEX=()
-
-add_case () {
-  CASE_NAMES+=("$1")
-  CASE_HEX+=("$2")
-}
-
-# Canonical smoke + boundary cases.
-add_case "stdin_empty" ""
-add_case "stdin_hi" "6869"
-add_case "stdin_ABC" "414243"
-add_case "stdin_bytes_000102" "000102"
-add_case "single_00" "00"
-add_case "single_ff" "ff"
-add_case "mixed_0001027f80ff" "0001027f80ff"
-add_case "ascii_sentence" "5761736d206c617965722032"
-add_case "repeating_ab_16" "$(python3 - <<'PY'
-print('ab' * 16)
-PY
-)"
-
-# Length boundary cases near powers of two and stdin buffer limit.
-add_case "boundary_len_1" "$(python3 - <<'PY'
-print('42' * 1)
-PY
-)"
-add_case "boundary_len_2" "$(python3 - <<'PY'
-print('42' * 2)
-PY
-)"
-add_case "boundary_len_3" "$(python3 - <<'PY'
-print('42' * 3)
-PY
-)"
-add_case "boundary_len_255" "$(python3 - <<'PY'
-print('42' * 255)
-PY
-)"
-add_case "boundary_len_256" "$(python3 - <<'PY'
-print('42' * 256)
-PY
-)"
-add_case "boundary_len_1023" "$(python3 - <<'PY'
-print('42' * 1023)
-PY
-)"
-add_case "boundary_len_4096" "$(python3 - <<'PY'
-print('42' * 4096)
-PY
-)"
-
-if [[ "$WASI_MODE" == "full" ]]; then
-  add_case "boundary_len_4095" "$(python3 - <<'PY'
-print('37' * 4095)
-PY
-)"
-fi
-
-for ((i=0; i<${#CASE_NAMES[@]}; i++)); do
-  run_case_hex "${CASE_NAMES[$i]}" "${CASE_HEX[$i]}"
-done
-
-# Deterministic pseudo-random vectors for broader behavior coverage.
-RAND_INDEX=0
-while IFS= read -r hex_line; do
-  run_case_hex "random_seed_${WASI_RANDOM_SEED}_${RAND_INDEX}" "$hex_line"
-  RAND_INDEX=$((RAND_INDEX + 1))
-done < <(python3 - "$WASI_RANDOM_CASES" "$WASI_MAX_RANDOM_LEN" "$WASI_RANDOM_SEED" <<'PY'
-import random
-import sys
-
-case_count = int(sys.argv[1])
-max_len = int(sys.argv[2])
-seed = int(sys.argv[3])
-rng = random.Random(seed)
-
-for _ in range(case_count):
-    n = rng.randint(0, max_len)
-    b = bytes(rng.getrandbits(8) for _ in range(n))
-    print(b.hex())
-PY
-)
+while IFS=$'\t' read -r case_name case_hex || [[ -n "$case_name" ]]; do
+  run_case_hex "$case_name" "$case_hex"
+done < <("$CASE_BIN" \
+  --mode "$WASI_MODE" \
+  --random-cases "$WASI_RANDOM_CASES" \
+  --max-random-len "$WASI_MAX_RANDOM_LEN" \
+  --seed "$WASI_RANDOM_SEED")
 
 TOTAL_FAIL=$((FAIL_OUTPUT_MISMATCH + FAIL_TRAP + FAIL_EXIT_CODE + FAIL_EXCEPTION))
 TOTAL_CASES=$((PASS_COUNT + TOTAL_FAIL))
