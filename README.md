@@ -40,7 +40,7 @@ It also generates a unified results file: `results/run_results.csv` with per-tes
 - `scripts/build_wasi.sh`  
   Compiles `codec.c + wasi_main.c` into `build/wasi/codec_wasi.wasm`.
 - `scripts/test_wasi.sh`  
-  Runs multiple WASI test cases via `wasmtime run` and appends results to CSV.
+    Layer 2 pipeline runner: compiles the case generator, loads tests from `tests/integrations/`, executes them with `wasmtime run`, and appends results to CSV.
 
 #### Layer 2 execution modes
 
