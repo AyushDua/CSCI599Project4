@@ -2,9 +2,11 @@
 set -euo pipefail
 
 BUG_ID="${BUG_ID:-CLEAN_CODEC}"
-CSV="results/run_results.csv"
+CSV="${CSV:-results/run_results.csv}"
 WASM="build/wasi/codec_wasi.wasm"
 WASI_MODE="${WASI_MODE:-full}"   # fast or full
+WASI_EXECUTION_MODE="${WASI_EXECUTION_MODE:-both}"   # start, invoke, or both
+WASI_REPEAT_RUNS="${WASI_REPEAT_RUNS:-1}"
 
 # Coverage knobs (override per run as needed).
 if [[ "$WASI_MODE" == "full" ]]; then
@@ -23,6 +25,14 @@ FAIL_TRAP=0
 FAIL_EXIT_CODE=0
 FAIL_EXCEPTION=0
 WASMTIME_BIN=""
+
+declare -a INVOKE_CASE_NAMES=(
+  "invoke_empty"
+  "invoke_hi"
+  "invoke_ABC"
+  "invoke_mixed_0001027f80ff"
+  "invoke_byte_ramp_256"
+)
 
 if [[ ! -f "$WASM" ]]; then
   echo "Missing Wasm artifact: $WASM"
@@ -81,6 +91,12 @@ update_fail_counter () {
 run_case_hex () {
   local name="$1"
   local input_hex="$2"
+  local run_index="$3"
+
+  local test_name="$name"
+  if [[ "$WASI_REPEAT_RUNS" != "1" ]]; then
+    test_name="${name}#run${run_index}"
+  fi
 
   local normalized_hex
   normalized_hex="$(echo "$input_hex" | tr 'A-F' 'a-f')"
@@ -116,17 +132,58 @@ PY
     local kind
     kind="$(classify_runtime_failure_kind "$(echo "$err" | tr '[:upper:]' '[:lower:]')")"
     update_fail_counter "$kind"
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "fail" "$kind" "input_len=$input_len expected_len=$expected_len hex_preview=$preview rc=$rc err=$err"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "$kind" "mode=start run_index=$run_index input_len=$input_len expected_len=$expected_len hex_preview=$preview rc=$rc err=$err"
     FAIL=1
     return
   fi
 
   if [[ "$out" == "$expected" ]]; then
     PASS_COUNT=$((PASS_COUNT + 1))
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "pass" "none" "input_len=$input_len expected_len=$expected_len hex_preview=$preview"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "pass" "none" "mode=start run_index=$run_index input_len=$input_len expected_len=$expected_len hex_preview=$preview"
   else
     update_fail_counter "output_mismatch"
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "fail" "output_mismatch" "input_len=$input_len expected_len=$expected_len actual_len=${#out} hex_preview=$preview expected_preview=$(preview_hex "$expected") actual_preview=$(preview_hex "$out")"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "output_mismatch" "mode=start run_index=$run_index input_len=$input_len expected_len=$expected_len actual_len=${#out} hex_preview=$preview expected_preview=$(preview_hex "$expected") actual_preview=$(preview_hex "$out")"
+    FAIL=1
+  fi
+}
+
+run_invoke_case () {
+  local name="$1"
+  local case_id="$2"
+  local run_index="$3"
+
+  local test_name="$name"
+  if [[ "$WASI_REPEAT_RUNS" != "1" ]]; then
+    test_name="${name}#run${run_index}"
+  fi
+
+  local out err rc
+  local errfile
+  errfile="$(mktemp -t wasi_invoke_err.XXXXXX)"
+
+  set +e
+  out="$("$WASMTIME_BIN" run --invoke codec_wasi_invoke_case "$WASM" "$case_id" 2> "$errfile" | tr -d '\r\n[:space:]')"
+  rc=$?
+  set -e
+
+  err="$(cat "$errfile")"
+  rm -f "$errfile"
+
+  if [[ $rc -ne 0 ]]; then
+    local kind
+    kind="$(classify_runtime_failure_kind "$(echo "$err" | tr '[:upper:]' '[:lower:]')")"
+    update_fail_counter "$kind"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "$kind" "mode=invoke run_index=$run_index invoke_case_id=$case_id rc=$rc err=$err"
+    FAIL=1
+    return
+  fi
+
+  if [[ "$out" == "0" ]]; then
+    PASS_COUNT=$((PASS_COUNT + 1))
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "pass" "none" "mode=invoke run_index=$run_index invoke_case_id=$case_id"
+  else
+    update_fail_counter "output_mismatch"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "output_mismatch" "mode=invoke run_index=$run_index invoke_case_id=$case_id returned=$out"
     FAIL=1
   fi
 }
@@ -190,16 +247,18 @@ PY
 )"
 fi
 
-for ((i=0; i<${#CASE_NAMES[@]}; i++)); do
-  run_case_hex "${CASE_NAMES[$i]}" "${CASE_HEX[$i]}"
-done
+run_start_mode_cases () {
+  local run_index="$1"
 
-# Deterministic pseudo-random vectors for broader behavior coverage.
-RAND_INDEX=0
-while IFS= read -r hex_line; do
-  run_case_hex "random_seed_${WASI_RANDOM_SEED}_${RAND_INDEX}" "$hex_line"
-  RAND_INDEX=$((RAND_INDEX + 1))
-done < <(python3 - "$WASI_RANDOM_CASES" "$WASI_MAX_RANDOM_LEN" "$WASI_RANDOM_SEED" <<'PY'
+  for ((i=0; i<${#CASE_NAMES[@]}; i++)); do
+    run_case_hex "${CASE_NAMES[$i]}" "${CASE_HEX[$i]}" "$run_index"
+  done
+
+  local rand_index=0
+  while IFS= read -r hex_line; do
+    run_case_hex "random_seed_${WASI_RANDOM_SEED}_${rand_index}" "$hex_line" "$run_index"
+    rand_index=$((rand_index + 1))
+  done < <(python3 - "$WASI_RANDOM_CASES" "$WASI_MAX_RANDOM_LEN" "$WASI_RANDOM_SEED" <<'PY'
 import random
 import sys
 
@@ -214,10 +273,29 @@ for _ in range(case_count):
     print(b.hex())
 PY
 )
+}
+
+run_invoke_mode_cases () {
+  local run_index="$1"
+
+  for ((i=0; i<${#INVOKE_CASE_NAMES[@]}; i++)); do
+    run_invoke_case "${INVOKE_CASE_NAMES[$i]}" "$i" "$run_index"
+  done
+}
+
+for ((run_index=1; run_index<=WASI_REPEAT_RUNS; run_index++)); do
+  if [[ "$WASI_EXECUTION_MODE" == "start" || "$WASI_EXECUTION_MODE" == "both" ]]; then
+    run_start_mode_cases "$run_index"
+  fi
+
+  if [[ "$WASI_EXECUTION_MODE" == "invoke" || "$WASI_EXECUTION_MODE" == "both" ]]; then
+    run_invoke_mode_cases "$run_index"
+  fi
+done
 
 TOTAL_FAIL=$((FAIL_OUTPUT_MISMATCH + FAIL_TRAP + FAIL_EXIT_CODE + FAIL_EXCEPTION))
 TOTAL_CASES=$((PASS_COUNT + TOTAL_FAIL))
 
-echo "[Layer2 Summary] mode=$WASI_MODE total=$TOTAL_CASES pass=$PASS_COUNT fail=$TOTAL_FAIL mismatch=$FAIL_OUTPUT_MISMATCH trap=$FAIL_TRAP exit_code=$FAIL_EXIT_CODE exception=$FAIL_EXCEPTION seed=$WASI_RANDOM_SEED random_cases=$WASI_RANDOM_CASES"
+echo "[Layer2 Summary] mode=$WASI_MODE exec_mode=$WASI_EXECUTION_MODE repeats=$WASI_REPEAT_RUNS total=$TOTAL_CASES pass=$PASS_COUNT fail=$TOTAL_FAIL mismatch=$FAIL_OUTPUT_MISMATCH trap=$FAIL_TRAP exit_code=$FAIL_EXIT_CODE exception=$FAIL_EXCEPTION seed=$WASI_RANDOM_SEED random_cases=$WASI_RANDOM_CASES"
 
 exit $FAIL
