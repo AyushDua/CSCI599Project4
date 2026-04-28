@@ -6,6 +6,19 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/.tools"
 mkdir -p "$TOOLS_DIR"
 
+# Windows Git Bash compatibility
+PYTHON="${PYTHON:-}"
+if [[ -z "$PYTHON" ]]; then
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON="python3"
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON="python"
+  else
+    echo "python not found on PATH"
+    exit 2
+  fi
+fi
+
 # Detect arch string expected by wasi-sdk releases.
 ARCH="$(uname -m)"
 if [[ "$ARCH" == "arm64" ]]; then
@@ -31,7 +44,7 @@ fi
 
 # Get latest WASI SDK major version number from GitHub API (e.g., wasi-sdk-27).
 LATEST_TAG="$(curl -s https://api.github.com/repos/WebAssembly/wasi-sdk/releases/latest | \
-  python3 -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")"
+  "${PYTHON:-python3}" -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")"
 
 # Extract the numeric version from tag: "wasi-sdk-27" -> "27"
 WASI_VERSION="${LATEST_TAG#wasi-sdk-}"
