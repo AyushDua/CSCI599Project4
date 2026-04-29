@@ -2,9 +2,11 @@
 set -euo pipefail
 
 BUG_ID="${BUG_ID:-CLEAN_CODEC}"
-CSV="results/run_results.csv"
+CSV="${CSV:-results/run_results.csv}"
 WASM="build/wasi/codec_wasi.wasm"
 WASI_MODE="${WASI_MODE:-full}"   # fast or full
+WASI_EXECUTION_MODE="${WASI_EXECUTION_MODE:-both}"   # start, invoke, or both
+WASI_REPEAT_RUNS="${WASI_REPEAT_RUNS:-1}"
 
 # Coverage knobs (override per run as needed).
 if [[ "$WASI_MODE" == "full" ]]; then
@@ -23,6 +25,14 @@ FAIL_TRAP=0
 FAIL_EXIT_CODE=0
 FAIL_EXCEPTION=0
 WASMTIME_BIN=""
+
+declare -a INVOKE_CASE_NAMES=(
+  "invoke_empty"
+  "invoke_hi"
+  "invoke_ABC"
+  "invoke_mixed_0001027f80ff"
+  "invoke_byte_ramp_256"
+)
 
 if [[ ! -f "$WASM" ]]; then
   echo "Missing Wasm artifact: $WASM"
@@ -45,6 +55,36 @@ fi
 if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 not found on PATH"
   exit 2
+fi
+
+CASE_SOURCE="tests/integrations/layer2_wasi_cases.cpp"
+CASE_BIN="build/host/layer2_wasi_cases"
+
+if [[ ! -f "$CASE_SOURCE" ]]; then
+  echo "Missing Layer 2 test definitions: $CASE_SOURCE"
+  exit 2
+fi
+
+build_case_generator () {
+  local compiler=""
+
+  if command -v c++ >/dev/null 2>&1; then
+    compiler="$(command -v c++)"
+  elif command -v g++ >/dev/null 2>&1; then
+    compiler="$(command -v g++)"
+  elif command -v clang++ >/dev/null 2>&1; then
+    compiler="$(command -v clang++)"
+  else
+    echo "No C++ compiler found for Layer 2 case generator"
+    exit 2
+  fi
+
+  mkdir -p "$(dirname "$CASE_BIN")"
+  "$compiler" -std=c++17 -O2 "$CASE_SOURCE" -o "$CASE_BIN"
+}
+
+if [[ ! -x "$CASE_BIN" || "$CASE_SOURCE" -nt "$CASE_BIN" ]]; then
+  build_case_generator
 fi
 
 preview_hex () {
@@ -81,6 +121,12 @@ update_fail_counter () {
 run_case_hex () {
   local name="$1"
   local input_hex="$2"
+  local run_index="$3"
+
+  local test_name="$name"
+  if [[ "$WASI_REPEAT_RUNS" != "1" ]]; then
+    test_name="${name}#run${run_index}"
+  fi
 
   local normalized_hex
   normalized_hex="$(echo "$input_hex" | tr 'A-F' 'a-f')"
@@ -116,108 +162,95 @@ PY
     local kind
     kind="$(classify_runtime_failure_kind "$(echo "$err" | tr '[:upper:]' '[:lower:]')")"
     update_fail_counter "$kind"
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "fail" "$kind" "input_len=$input_len expected_len=$expected_len hex_preview=$preview rc=$rc err=$err"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "$kind" "mode=start run_index=$run_index input_len=$input_len expected_len=$expected_len hex_preview=$preview rc=$rc err=$err"
     FAIL=1
     return
   fi
 
   if [[ "$out" == "$expected" ]]; then
     PASS_COUNT=$((PASS_COUNT + 1))
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "pass" "none" "input_len=$input_len expected_len=$expected_len hex_preview=$preview"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "pass" "none" "mode=start run_index=$run_index input_len=$input_len expected_len=$expected_len hex_preview=$preview"
   else
     update_fail_counter "output_mismatch"
-    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$name" "fail" "output_mismatch" "input_len=$input_len expected_len=$expected_len actual_len=${#out} hex_preview=$preview expected_preview=$(preview_hex "$expected") actual_preview=$(preview_hex "$out")"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "output_mismatch" "mode=start run_index=$run_index input_len=$input_len expected_len=$expected_len actual_len=${#out} hex_preview=$preview expected_preview=$(preview_hex "$expected") actual_preview=$(preview_hex "$out")"
     FAIL=1
   fi
 }
 
-declare -a CASE_NAMES=()
-declare -a CASE_HEX=()
+run_invoke_case () {
+  local name="$1"
+  local case_id="$2"
+  local run_index="$3"
 
-add_case () {
-  CASE_NAMES+=("$1")
-  CASE_HEX+=("$2")
+  local test_name="$name"
+  if [[ "$WASI_REPEAT_RUNS" != "1" ]]; then
+    test_name="${name}#run${run_index}"
+  fi
+
+  local out err rc
+  local errfile
+  errfile="$(mktemp -t wasi_invoke_err.XXXXXX)"
+
+  set +e
+  out="$("$WASMTIME_BIN" run --invoke codec_wasi_invoke_case "$WASM" "$case_id" 2> "$errfile" | tr -d '\r\n[:space:]')"
+  rc=$?
+  set -e
+
+  err="$(cat "$errfile")"
+  rm -f "$errfile"
+
+  if [[ $rc -ne 0 ]]; then
+    local kind
+    kind="$(classify_runtime_failure_kind "$(echo "$err" | tr '[:upper:]' '[:lower:]')")"
+    update_fail_counter "$kind"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "$kind" "mode=invoke run_index=$run_index invoke_case_id=$case_id rc=$rc err=$err"
+    FAIL=1
+    return
+  fi
+
+  if [[ "$out" == "0" ]]; then
+    PASS_COUNT=$((PASS_COUNT + 1))
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "pass" "none" "mode=invoke run_index=$run_index invoke_case_id=$case_id"
+  else
+    update_fail_counter "output_mismatch"
+    ./scripts/log_csv.sh "$CSV" "$BUG_ID" "layer2_wasmtime" "wasmtime" "$test_name" "fail" "output_mismatch" "mode=invoke run_index=$run_index invoke_case_id=$case_id returned=$out"
+    FAIL=1
+  fi
 }
 
-# Canonical smoke + boundary cases.
-add_case "stdin_empty" ""
-add_case "stdin_hi" "6869"
-add_case "stdin_ABC" "414243"
-add_case "stdin_bytes_000102" "000102"
-add_case "single_00" "00"
-add_case "single_ff" "ff"
-add_case "mixed_0001027f80ff" "0001027f80ff"
-add_case "ascii_sentence" "5761736d206c617965722032"
-add_case "repeating_ab_16" "$(python3 - <<'PY'
-print('ab' * 16)
-PY
-)"
+run_start_mode_cases () {
+  local run_index="$1"
 
-# Length boundary cases near powers of two and stdin buffer limit.
-add_case "boundary_len_1" "$(python3 - <<'PY'
-print('42' * 1)
-PY
-)"
-add_case "boundary_len_2" "$(python3 - <<'PY'
-print('42' * 2)
-PY
-)"
-add_case "boundary_len_3" "$(python3 - <<'PY'
-print('42' * 3)
-PY
-)"
-add_case "boundary_len_255" "$(python3 - <<'PY'
-print('42' * 255)
-PY
-)"
-add_case "boundary_len_256" "$(python3 - <<'PY'
-print('42' * 256)
-PY
-)"
-add_case "boundary_len_1023" "$(python3 - <<'PY'
-print('42' * 1023)
-PY
-)"
-add_case "boundary_len_4096" "$(python3 - <<'PY'
-print('42' * 4096)
-PY
-)"
+  while IFS=$'\t' read -r case_name case_hex || [[ -n "$case_name" ]]; do
+    run_case_hex "$case_name" "$case_hex" "$run_index"
+  done < <("$CASE_BIN" \
+    --mode "$WASI_MODE" \
+    --random-cases "$WASI_RANDOM_CASES" \
+    --max-random-len "$WASI_MAX_RANDOM_LEN" \
+    --seed "$WASI_RANDOM_SEED")
+}
 
-if [[ "$WASI_MODE" == "full" ]]; then
-  add_case "boundary_len_4095" "$(python3 - <<'PY'
-print('37' * 4095)
-PY
-)"
-fi
+run_invoke_mode_cases () {
+  local run_index="$1"
 
-for ((i=0; i<${#CASE_NAMES[@]}; i++)); do
-  run_case_hex "${CASE_NAMES[$i]}" "${CASE_HEX[$i]}"
+  for ((i=0; i<${#INVOKE_CASE_NAMES[@]}; i++)); do
+    run_invoke_case "${INVOKE_CASE_NAMES[$i]}" "$i" "$run_index"
+  done
+}
+
+for ((run_index=1; run_index<=WASI_REPEAT_RUNS; run_index++)); do
+  if [[ "$WASI_EXECUTION_MODE" == "start" || "$WASI_EXECUTION_MODE" == "both" ]]; then
+    run_start_mode_cases "$run_index"
+  fi
+
+  if [[ "$WASI_EXECUTION_MODE" == "invoke" || "$WASI_EXECUTION_MODE" == "both" ]]; then
+    run_invoke_mode_cases "$run_index"
+  fi
 done
-
-# Deterministic pseudo-random vectors for broader behavior coverage.
-RAND_INDEX=0
-while IFS= read -r hex_line; do
-  run_case_hex "random_seed_${WASI_RANDOM_SEED}_${RAND_INDEX}" "$hex_line"
-  RAND_INDEX=$((RAND_INDEX + 1))
-done < <(python3 - "$WASI_RANDOM_CASES" "$WASI_MAX_RANDOM_LEN" "$WASI_RANDOM_SEED" <<'PY'
-import random
-import sys
-
-case_count = int(sys.argv[1])
-max_len = int(sys.argv[2])
-seed = int(sys.argv[3])
-rng = random.Random(seed)
-
-for _ in range(case_count):
-    n = rng.randint(0, max_len)
-    b = bytes(rng.getrandbits(8) for _ in range(n))
-    print(b.hex())
-PY
-)
 
 TOTAL_FAIL=$((FAIL_OUTPUT_MISMATCH + FAIL_TRAP + FAIL_EXIT_CODE + FAIL_EXCEPTION))
 TOTAL_CASES=$((PASS_COUNT + TOTAL_FAIL))
 
-echo "[Layer2 Summary] mode=$WASI_MODE total=$TOTAL_CASES pass=$PASS_COUNT fail=$TOTAL_FAIL mismatch=$FAIL_OUTPUT_MISMATCH trap=$FAIL_TRAP exit_code=$FAIL_EXIT_CODE exception=$FAIL_EXCEPTION seed=$WASI_RANDOM_SEED random_cases=$WASI_RANDOM_CASES"
+echo "[Layer2 Summary] mode=$WASI_MODE exec_mode=$WASI_EXECUTION_MODE repeats=$WASI_REPEAT_RUNS total=$TOTAL_CASES pass=$PASS_COUNT fail=$TOTAL_FAIL mismatch=$FAIL_OUTPUT_MISMATCH trap=$FAIL_TRAP exit_code=$FAIL_EXIT_CODE exception=$FAIL_EXCEPTION seed=$WASI_RANDOM_SEED random_cases=$WASI_RANDOM_CASES"
 
 exit $FAIL

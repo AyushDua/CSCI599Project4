@@ -12,3 +12,14 @@ B004_CODEC,codec,null-deref,L3,"Null-pointer checks removed from codec_hex_encod
 B005_CODEC,codec,logic,L3,"Wrong nibble mask for high nibble: `(b >> 4) & 0xF` changed to `(b >> 4) & 0xFF`. The shift already discards the low nibble so this is a no-op for values ≤ 0x0F, but for b ≥ 0x10 it produces indices 16–255 into the 16-byte HEX table, reading undefined memory and corrupting output.",hi (h=0x68),high nibble index out of range → garbage hex chars,hexEncode(hi)=6869 / hexEncode(ABC)=414243
 B006_CODEC,codec,format,L3,"Uppercase HEX table: HEX[] changed from '0123456789abcdef' to '0123456789ABCDEF'. All nibbles ≥ 0xA are uppercased. Inputs with bytes < 0xA0 in their low nibble appear unaffected; inputs with any nibble ≥ 0xA expose the bug.",é (0xC3 0xA9),output=C3A9 instead of c3a9,lowercase-hex-only format tests / hexEncode(é)=c3a9
 B007_CODEC,codec,logic,L3,"Wrong out_len assignment: `*out_len = out_cap` instead of `*out_len = need`. web_api.c then null-terminates at out_cap instead of the correct position, corrupting or truncating the output string.",hello,output string is garbage-terminated or empty,hexEncode(hello)=68656c6c6f / output-length tests
+B008_CODEC,codec,marshaling,L3,utf8_byte_len counts bytes not codepoints — passes character count instead of byte count to encoder,e-acute U+00E9,codepoint_count_wrong,hexEncode(é)=c3a9 / hexEncode(你好)=e4bda0e5a5bd
+CLEAN_PARSER,parser,none,L1,No bug — baseline clean build,hello,field=hello,all native parser tests pass
+Q001_PARSER,parser,boundary,L1,null-term writes one byte past field_cap — off-by-one in null terminator placement,1-byte field in 1-byte buffer,buffer_overwrite,native GTest boundary tests
+Q002_PARSER,parser,logic,L1,no pos advance after unquoted field — parser re-reads the same field on every call,a comma b,re-reads same field,native GTest parser logic tests
+Q003_PARSER,parser,trap,L1,missing null check on in_pos — derefs null pointer causing crash,null in_pos,crash_or_trap,native GTest null-check tests
+Q004_PARSER,parser,runtime,L1,ignores closing quote of quoted field — trailing quote included in field content,"abc",extra_quote_in_content,native GTest quoted-field tests
+CLEAN_STATS,stats,none,L1,No bug — baseline clean build,{1 2 3},sum=6,all native stats tests pass
+S001_STATS,stats,logic,L1,int32 accumulator overflows on large sum — no overflow guard,{INT32_MAX 1},silent_integer_overflow,native GTest overflow tests
+S002_STATS,stats,boundary,L1,mean divides by n-1 instead of n — fencepost error in denominator,{1.0 2.0 3.0},mean=3.0_instead_of_2.0,native GTest mean tests
+S003_STATS,stats,trap,L1,missing null check on array in stats_min_i32 — derefs null array pointer,null array n=1,crash_or_trap,native GTest null-check tests
+S004_STATS,stats,runtime,L1,dot_f32 only processes first n/2 elements — loop bound is halved,"{1 2 3 4} dot {1 1 1 1}",result=3_instead_of_10,native GTest dot-product tests
