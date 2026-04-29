@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Layer 3 Charts</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1a1f3a;
+        --muted: #4a5270;
+        --paper: #edf0fc;
+        --panel: #f8faff;
+        --line: #c8d0e8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background: linear-gradient(180deg, #f0f4ff 0%, #e6eeff 100%);
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+      h1 { margin: 0 0 10px; font-size: 40px; line-height: 1.05; }
+      p.lead { margin: 0 0 24px; color: var(--muted); font-size: 18px; }
+      section { margin-top: 24px; }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18px;
+        box-shadow: 0 14px 30px rgba(30, 40, 100, 0.08);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .card h3 { margin: 0 0 10px; font-size: 18px; }
+      .card p { margin: 6px 0; color: var(--muted); }
+      svg { width: 100%; height: auto; display: block; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Layer 3 Browser Charts</h1>
+      <p class="lead">Auto-generated from layer3_summary.csv and layer3_browser_summary.csv.</p>
+      <section class="cards"><div class="card"><h3>B001_CODEC</h3><p><strong>Detected:</strong> yes</p><p><strong>Total rows:</strong> 57</p><p><strong>Browsers:</strong> chromium;firefox;webkit</p><p><strong>Flaky rate:</strong> 0.000</p></div><div class="card"><h3>B002_CODEC</h3><p><strong>Detected:</strong> yes</p><p><strong>Total rows:</strong> 57</p><p><strong>Browsers:</strong> chromium;firefox;webkit</p><p><strong>Flaky rate:</strong> 0.000</p></div><div class="card"><h3>B003_CODEC</h3><p><strong>Detected:</strong> yes</p><p><strong>Total rows:</strong> 57</p><p><strong>Browsers:</strong> chromium;firefox;webkit</p><p><strong>Flaky rate:</strong> 0.000</p></div><div class="card"><h3>CLEAN_CODEC</h3><p><strong>Detected:</strong> no</p><p><strong>Total rows:</strong> 57</p><p><strong>Browsers:</strong> chromium;firefox;webkit</p><p><strong>Flaky rate:</strong> 0.000</p></div></section>
+    </main>
+  </body>
+</html>
