@@ -101,15 +101,54 @@ Main visual files:
 - `scripts/install_emsdk.sh`  
   Installs Emscripten SDK into `.tools/`.
 - `scripts/build_web.sh`  
-  Produces `web/codec_web.js` and `web/codec_web.wasm`.
+  Produces `web/codec_web.js` and `web/codec_web.wasm`. Also writes `web/app.js` from an embedded template (so edits to `app.js` directly will be overwritten on the next build — edit the template in this script instead).
 - `web/index.html`  
   Loads the app.
 - `web/app.js`  
-  JS boundary logic: TextEncoder → malloc → copy into `Module.HEAPU8` → call Wasm → `UTF8ToString`.
+  JS boundary logic: TextEncoder → malloc → copy into `Module.HEAPU8` → call Wasm → `UTF8ToString`. Also exposes `window._Module` so Playwright tests can call `_codec_hex_encode_z` directly for boundary and trap testing.
 - `playwright.config.js`  
-  Playwright config: runs tests in Chromium/Firefox/WebKit and writes JSON report.
+  Playwright config: runs tests in Chromium/Firefox/WebKit, writes JSON report to `results/playwright_layer3.json`, and generates an HTML report in `playwright-report/`.
 - `tests/web/codec.spec.js`  
-  Playwright tests that call `window.hexEncode(...)` and assert results.
+  37 Playwright test cases (111 total runs across 3 browsers). Covers happy-path encoding, B001/B002/B003 detectors, raw-byte boundary calls via `window._Module`, randomised large-input stress tests, and cross-browser surrogate pair checks.
+
+#### Layer 3 bug variants
+
+The test harness injects bugs by swapping source files before building, then restoring them on exit (via `trap cleanup EXIT`):
+
+- `src/codec_B001.c` — off-by-one loop bug: skips the last byte of any input.
+- `src/codec_B003.c` — output-size guard removed: undersized buffer causes a Wasm memory trap.
+- `web/app_B002.js` — wrong JS length arg: passes `str.length` instead of `bytes.length`, silently truncates multi-byte UTF-8 characters.
+
+#### Layer 3 matrix + visual outputs
+
+Run all four variants (clean baseline + 3 bug variants) across all three browsers:
+
+```bash
+./scripts/run_layer3_matrix.sh CLEAN_CODEC:. B001_CODEC:. B002_CODEC:. B003_CODEC:.
+```
+
+This updates:
+
+- `results/layer3_matrix.csv`
+- `results/layer3_summary.csv`
+- `results/layer3_browser_summary.csv`
+- `results/layer3_master_matrix.csv`
+- `results/layer3_relationship_matrix.csv`
+- `results/layer3_chart.html`
+- `results/layer3_chart.svg`
+- `results/layer3_visual_matrix.svg`
+
+To regenerate charts from an existing matrix without re-running tests:
+
+```bash
+python3 scripts/analyze_layer3_results.py results/layer3_matrix.csv
+python3 scripts/render_layer3_chart.py
+```
+
+Main visual files:
+
+- `results/layer3_chart.html` — interactive HTML matrix (open in browser)
+- `results/layer3_visual_matrix.svg` — static SVG matrix view
 
 ### Results / datasets / tooling
 
