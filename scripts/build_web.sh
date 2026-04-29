@@ -51,6 +51,7 @@ const statusEl = document.getElementById('status');
   const Module = await createModule();
 
   window.codecReady = true;
+  window._Module = Module;
 
   window.hexEncode = (str) => {
     const bytes = new TextEncoder().encode(str);
@@ -89,6 +90,7 @@ const statusEl = document.getElementById('status');
   const Module = await createModule();
 
   window.codecReady = true;
+  window._Module = Module;
 
   window.hexEncode = (str) => {
     const bytes = new TextEncoder().encode(str);
