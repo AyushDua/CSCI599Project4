@@ -39,5 +39,6 @@ __pycache__/
 # Results (usually generated)
 results/*.json
 results/*.csv
+results/*
 
 selfreadme.md

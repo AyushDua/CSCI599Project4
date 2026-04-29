@@ -3,3 +3,18 @@ CLEAN_CODEC,codec,none,No bug (baseline),hi,output=6869
 B001_CODEC,codec,logic,off-by-one in loop,hi,output_mismatch
 B002_CODEC,codec,boundary,wrong length passed from JS,hi,exception_or_wrong_output
 B003_CODEC,codec,trap,remove output size check,hi,trap_or_crash
+B004_CODEC,codec,format,uppercase hex output,{0xDE 0xAD},output_mismatch
+B005_CODEC,codec,logic,nibble swap high/low order,{0x01},output_mismatch
+B006_CODEC,codec,logic,always-zero output (memset to ascii zero),{0xFF},output_mismatch
+B007_CODEC,codec,boundary,base64 output-len off-by-one,3 bytes,CODEC_ERR_OUTPUT_TOO_SMALL_when_should_succeed
+B008_CODEC,codec,marshaling,utf8_byte_len counts bytes not codepoints,e-acute U+00E9,codepoint_count_wrong
+CLEAN_PARSER,parser,none,No bug (baseline),hello, field=hello
+Q001_PARSER,parser,boundary,null-term writes one byte past field_cap,1-byte field in 1-byte buffer,buffer_overwrite
+Q002_PARSER,parser,logic,no pos advance after unquoted field,a comma b,re-reads same field
+Q003_PARSER,parser,trap,missing null check on in_pos,null in_pos,crash_or_trap
+Q004_PARSER,parser,runtime,ignores closing quote of quoted field,"abc",extra_quote_in_content
+CLEAN_STATS,stats,none,No bug (baseline),{1 2 3},sum=6
+S001_STATS,stats,logic,int32 accumulator overflows on large sum,{INT32_MAX 1},silent_integer_overflow
+S002_STATS,stats,boundary,mean divides by n-1 instead of n,{1.0 2.0 3.0},mean=3.0_instead_of_2.0
+S003_STATS,stats,trap,missing null check on array in stats_min_i32,null array n=1,crash_or_trap
+S004_STATS,stats,runtime,dot_f32 only processes first n/2 elements,{1 2 3 4} dot {1 1 1 1},result=3_instead_of_10
