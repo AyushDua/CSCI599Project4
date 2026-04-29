@@ -12,7 +12,8 @@ module.exports = defineConfig({
   },
   reporter: [
     ['list'],
-    ['json', { outputFile: 'results/playwright_layer3.json' }]
+    ['json', { outputFile: 'results/playwright_layer3.json' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }]
   ],
   projects: [
     { name: 'Chromium', use: { browserName: 'chromium' } },
