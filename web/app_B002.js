@@ -17,7 +17,8 @@ const statusEl = document.getElementById('status');
     const outCap = bytes.length * 2 + 1;
     const outPtr = Module._malloc(outCap);
 
-    const len = Module._codec_hex_encode_z(inPtr, bytes.length, outPtr, outCap);
+    /* B002: passes str.length instead of bytes.length — diverges for multi-byte UTF-8 */
+    const len = Module._codec_hex_encode_z(inPtr, str.length, outPtr, outCap);
 
     Module._free(inPtr);
 

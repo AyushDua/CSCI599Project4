@@ -3,36 +3,65 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/.tools"
-mkdir -p "$TOOLS_DIR"
-
 EMSDK_DIR="$TOOLS_DIR/emsdk"
+
+mkdir -p "$TOOLS_DIR"
 
 if [[ ! -d "$EMSDK_DIR" ]]; then
   echo "Cloning emsdk..."
   git clone https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
 else
-  echo "emsdk already exists; updating via git pull (recommended for git-clone installs)"
+  echo "emsdk already cloned; pulling latest..."
   (cd "$EMSDK_DIR" && git pull)
 fi
 
 cd "$EMSDK_DIR"
 
-# If installed via git clone, prefer update-tags rather than emsdk update
-./emsdk update-tags
+# Use `python emsdk.py` directly to avoid the `./emsdk` shebang requiring python3.
+python emsdk.py update-tags
+python emsdk.py install latest
+python emsdk.py activate latest
 
-# Install + activate toolchain
-./emsdk install latest
-./emsdk activate latest
+# --- Locate emsdk's bundled python and emcc.py ---
+EMSDK_PYTHON="$(find "$EMSDK_DIR/python" -maxdepth 3 -name "python.exe" | head -1)"
+EMSCRIPTEN_DIR="$EMSDK_DIR/upstream/emscripten"
+EM_CONFIG_PATH="$EMSDK_DIR/.emscripten"
 
-# Create env shim used by other scripts
-cat > "$TOOLS_DIR/emsdk_env.sh" <<EOF
-# Helper sourced by project scripts
-source "$EMSDK_DIR/emsdk_env.sh"
+if [[ -z "$EMSDK_PYTHON" ]]; then
+  echo "ERROR: could not find bundled python.exe inside emsdk/python/"
+  exit 1
+fi
+
+if [[ ! -f "$EMSCRIPTEN_DIR/emcc.py" ]]; then
+  echo "ERROR: emcc.py not found at $EMSCRIPTEN_DIR"
+  exit 1
+fi
+
+echo "Found emsdk python: $EMSDK_PYTHON"
+echo "Found emscripten:   $EMSCRIPTEN_DIR"
+
+# --- Create bash-callable emcc wrapper (Git Bash on Windows needs this) ---
+mkdir -p "$TOOLS_DIR/bin"
+
+cat > "$TOOLS_DIR/bin/emcc" << WRAPPER
+#!/usr/bin/env bash
+export EMSDK="$EMSDK_DIR"
+export EM_CONFIG="$EM_CONFIG_PATH"
+exec "$EMSDK_PYTHON" "$EMSCRIPTEN_DIR/emcc.py" "\$@"
+WRAPPER
+chmod +x "$TOOLS_DIR/bin/emcc"
+
+# --- Create env shim used by build_web.sh ---
+cat > "$TOOLS_DIR/emsdk_env.sh" << EOF
+export EMSDK="$EMSDK_DIR"
+export EM_CONFIG="$EM_CONFIG_PATH"
+export PATH="$TOOLS_DIR/bin:\$PATH"
 EOF
 
-echo "Emscripten installed. Env shim written to: $TOOLS_DIR/emsdk_env.sh"
+echo "Emscripten installed."
+echo "emcc wrapper: $TOOLS_DIR/bin/emcc"
+echo "Env shim:     $TOOLS_DIR/emsdk_env.sh"
 
-# Optional sanity check in this script:
-# shellcheck disable=SC1091
+# Sanity check
 source "$TOOLS_DIR/emsdk_env.sh"
 emcc -v

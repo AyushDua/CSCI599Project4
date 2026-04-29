@@ -111,7 +111,7 @@ def classify_failure_kind(status: str, details: str) -> str:
     # Default to assertion_fail (most Playwright failures are assertions)
     return "assertion_fail"
 
-def build_test_name(prefix: str, spec: dict, test: dict) -> str:
+def build_test_name(prefix: str, spec: dict, test: dict, run_index: int) -> str:
     """
     Create a stable human-readable test identifier.
     spec.title usually equals the test title, but we add file:line for uniqueness.
@@ -129,14 +129,19 @@ def build_test_name(prefix: str, spec: dict, test: dict) -> str:
         title = f"{prefix}::{title}"
     if loc:
         title = f"{title} ({loc})"
+
+    if run_index > 1:
+        title = f"{title}#run{run_index}"
+
     return title
 
 def main():
     if len(sys.argv) < 4:
-        print("Usage: playwright_json_to_csv.py <pw_json> <csv_out> <bug_id>", file=sys.stderr)
+        print("Usage: playwright_json_to_csv.py <pw_json> <csv_out> <bug_id> [run_index]", file=sys.stderr)
         sys.exit(2)
 
     pw_json, csv_out, bug_id = sys.argv[1], sys.argv[2], sys.argv[3]
+    run_index = int(sys.argv[4]) if len(sys.argv) >= 5 else 1
     layer = "layer3_browser"
 
     ensure_header(csv_out)
@@ -177,7 +182,7 @@ def main():
                 details = status
                 failure_kind = ""
 
-            test_name = build_test_name(prefix, spec, test)
+            test_name = build_test_name(prefix, spec, test, run_index)
 
             rows.append([iso_now(), bug_id, layer, runtime, test_name, outcome, failure_kind, details])
 
