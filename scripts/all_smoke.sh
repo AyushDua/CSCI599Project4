@@ -10,8 +10,10 @@ MODULE=stats  ./scripts/test_native.sh
 
 ./scripts/build_wasi.sh
 ./scripts/test_wasi.sh
+python3 scripts/analyze_layer2_results.py --no-render-chart --no-open-chart
 
 ./scripts/test_web.sh
+python3 scripts/analyze_layer3_results.py --csv results/run_results.csv --no-render-chart --no-open-chart
 
 # Layer 1 charts
 python3 scripts/render_layer1_chart.py
