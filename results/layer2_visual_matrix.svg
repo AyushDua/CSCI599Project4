@@ -1,109 +1,162 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 610" width="1360" height="610" role="img" aria-label="Layer 2 visual matrix" style="font-family: Helvetica, Arial, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1630 720" width="1630" height="720" role="img" aria-label="Layer 2 visual matrix" style="font-family: Helvetica, Arial, sans-serif;">
 <defs>
   <linearGradient id="matrixbg" x1="0" x2="0" y1="0" y2="1">
     <stop offset="0%" stop-color="#f6f1e7"/>
     <stop offset="100%" stop-color="#efe6d7"/>
   </linearGradient>
 </defs>
-<rect width="1360" height="610" fill="url(#matrixbg)"/>
+<rect width="1630" height="720" fill="url(#matrixbg)"/>
 <text x="60" y="76" font-size="48" font-weight="700" fill="#20180f">Layer 2 Visual Matrix</text>
 <text x="60" y="114" font-size="22" fill="#5a4d40">Rows = bug variants, columns = execution mode + test family, cells = fail/total.</text>
-<rect x="40" y="140" width="1280" height="430" rx="28" fill="#fffaf0" stroke="#d9cdb6" stroke-width="2"/>
-<rect x="60" y="532" width="24" height="24" rx="6" fill="#dff3e4" stroke="#cbbfa9"/>
-<text x="96" y="550" font-size="18" fill="#5a4d40">0 fail</text>
-<rect x="280" y="532" width="24" height="24" rx="6" fill="#fde3b4" stroke="#cbbfa9"/>
-<text x="316" y="550" font-size="18" fill="#5a4d40">partial fail</text>
-<rect x="500" y="532" width="24" height="24" rx="6" fill="#f8c4b4" stroke="#cbbfa9"/>
-<text x="536" y="550" font-size="18" fill="#5a4d40">all fail</text>
+<rect x="40" y="140" width="1550" height="540" rx="28" fill="#fffaf0" stroke="#d9cdb6" stroke-width="2"/>
+<rect x="60" y="642" width="24" height="24" rx="6" fill="#dff3e4" stroke="#cbbfa9"/>
+<text x="96" y="660" font-size="18" fill="#5a4d40">0 fail</text>
+<rect x="280" y="642" width="24" height="24" rx="6" fill="#fde3b4" stroke="#cbbfa9"/>
+<text x="316" y="660" font-size="18" fill="#5a4d40">partial fail</text>
+<rect x="500" y="642" width="24" height="24" rx="6" fill="#f8c4b4" stroke="#cbbfa9"/>
+<text x="536" y="660" font-size="18" fill="#5a4d40">all fail</text>
 <text x="272.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">invoke</text>
 <text x="272.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">invoke</text>
-<text x="397.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="397.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">ascii</text>
+<text x="397.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">invoke</text>
+<text x="397.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">utf8</text>
 <text x="522.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="522.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">boundary</text>
+<text x="522.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">ascii</text>
 <text x="647.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="647.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">mixed_bytes</text>
+<text x="647.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">boundary</text>
 <text x="772.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="772.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">pattern</text>
+<text x="772.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">mixed_bytes</text>
 <text x="897.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="897.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">random</text>
+<text x="897.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">pattern</text>
 <text x="1022.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="1022.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">single_byte</text>
+<text x="1022.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">random</text>
 <text x="1147.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
-<text x="1147.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">stdin</text>
+<text x="1147.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">single_byte</text>
+<text x="1272.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
+<text x="1272.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">stdin</text>
+<text x="1397.5" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#1f1810">start</text>
+<text x="1397.5" y="154" text-anchor="middle" font-size="14" fill="#5a4d40">utf8</text>
 <text x="192" y="218" text-anchor="end" font-size="18" font-weight="700" fill="#20180f">B001_CODEC</text>
 <rect x="210" y="170" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
 <text x="268.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">4/5 fail</text>
 <text x="268.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=4</text>
 <rect x="335" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
-<text x="393.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/1 fail</text>
-<text x="393.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
+<text x="393.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">3/3 fail</text>
+<text x="393.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=3</text>
 <rect x="460" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
-<text x="518.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">7/7 fail</text>
-<text x="518.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=7</text>
+<text x="518.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/1 fail</text>
+<text x="518.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
 <rect x="585" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
-<text x="643.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/1 fail</text>
-<text x="643.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
+<text x="643.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">7/7 fail</text>
+<text x="643.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=7</text>
 <rect x="710" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
 <text x="768.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/1 fail</text>
 <text x="768.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
 <rect x="835" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
-<text x="893.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">20/20 fail</text>
-<text x="893.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=20</text>
-<rect x="960" y="170" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
-<text x="1018.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/2 fail</text>
-<text x="1018.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
+<text x="893.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/1 fail</text>
+<text x="893.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
+<rect x="960" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
+<text x="1018.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">20/20 fail</text>
+<text x="1018.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=20</text>
 <rect x="1085" y="170" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
-<text x="1143.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">3/4 fail</text>
-<text x="1143.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=3</text>
-<text x="192" y="304" text-anchor="end" font-size="18" font-weight="700" fill="#20180f">B003_CODEC</text>
-<rect x="210" y="256" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
-<text x="268.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/5 fail</text>
-<text x="268.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">trap=1</text>
-<rect x="335" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="393.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
-<text x="393.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<text x="1143.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/2 fail</text>
+<text x="1143.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=1</text>
+<rect x="1210" y="170" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
+<text x="1268.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">3/4 fail</text>
+<text x="1268.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=3</text>
+<rect x="1335" y="170" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
+<text x="1393.5" y="205" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">3/3 fail</text>
+<text x="1393.5" y="228" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=3</text>
+<text x="192" y="304" text-anchor="end" font-size="18" font-weight="700" fill="#20180f">B002_CODEC</text>
+<rect x="210" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="268.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/5 fail</text>
+<text x="268.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="335" y="256" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
+<text x="393.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">3/3 fail</text>
+<text x="393.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=3</text>
 <rect x="460" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="518.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/7 fail</text>
+<text x="518.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
 <text x="518.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="585" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="643.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
+<text x="643.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/7 fail</text>
 <text x="643.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="710" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
 <text x="768.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
 <text x="768.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="835" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="893.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/20 fail</text>
+<text x="893.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
 <text x="893.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="960" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="1018.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/2 fail</text>
+<text x="1018.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/20 fail</text>
 <text x="1018.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
-<rect x="1085" y="256" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
-<text x="1143.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/4 fail</text>
-<text x="1143.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">trap=1</text>
-<text x="192" y="390" text-anchor="end" font-size="18" font-weight="700" fill="#20180f">CLEAN_CODEC</text>
-<rect x="210" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="268.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/5 fail</text>
-<text x="268.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1085" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1143.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/2 fail</text>
+<text x="1143.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1210" y="256" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1268.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/4 fail</text>
+<text x="1268.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1335" y="256" width="117" height="76" rx="14" fill="#f8c4b4" stroke="#d3c7b4"/>
+<text x="1393.5" y="291" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">3/3 fail</text>
+<text x="1393.5" y="314" text-anchor="middle" font-size="12" fill="#5a4d40">mismatch=3</text>
+<text x="192" y="390" text-anchor="end" font-size="18" font-weight="700" fill="#20180f">B003_CODEC</text>
+<rect x="210" y="342" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
+<text x="268.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/5 fail</text>
+<text x="268.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">trap=1</text>
 <rect x="335" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="393.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
+<text x="393.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/3 fail</text>
 <text x="393.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="460" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="518.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/7 fail</text>
+<text x="518.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
 <text x="518.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="585" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="643.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
+<text x="643.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/7 fail</text>
 <text x="643.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="710" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
 <text x="768.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
 <text x="768.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="835" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="893.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/20 fail</text>
+<text x="893.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
 <text x="893.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="960" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="1018.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/2 fail</text>
+<text x="1018.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/20 fail</text>
 <text x="1018.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 <rect x="1085" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
-<text x="1143.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/4 fail</text>
+<text x="1143.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/2 fail</text>
 <text x="1143.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1210" y="342" width="117" height="76" rx="14" fill="#fde3b4" stroke="#d3c7b4"/>
+<text x="1268.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">1/4 fail</text>
+<text x="1268.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">trap=1</text>
+<rect x="1335" y="342" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1393.5" y="377" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/3 fail</text>
+<text x="1393.5" y="400" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<text x="192" y="476" text-anchor="end" font-size="18" font-weight="700" fill="#20180f">CLEAN_CODEC</text>
+<rect x="210" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="268.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/5 fail</text>
+<text x="268.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="335" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="393.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/3 fail</text>
+<text x="393.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="460" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="518.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
+<text x="518.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="585" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="643.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/7 fail</text>
+<text x="643.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="710" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="768.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
+<text x="768.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="835" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="893.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/1 fail</text>
+<text x="893.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="960" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1018.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/20 fail</text>
+<text x="1018.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1085" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1143.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/2 fail</text>
+<text x="1143.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1210" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1268.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/4 fail</text>
+<text x="1268.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
+<rect x="1335" y="428" width="117" height="76" rx="14" fill="#dff3e4" stroke="#d3c7b4"/>
+<text x="1393.5" y="463" text-anchor="middle" font-size="16" font-weight="700" fill="#20180f">0/3 fail</text>
+<text x="1393.5" y="486" text-anchor="middle" font-size="12" fill="#5a4d40">detected=no</text>
 </svg>

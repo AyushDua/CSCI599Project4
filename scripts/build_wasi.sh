@@ -13,6 +13,7 @@ EXTRA_CFLAGS=()
 case "$BUG_ID" in
   CLEAN_CODEC|"") ;;
   B001_CODEC) EXTRA_CFLAGS+=("-DCODEC_BUG_B001=1") ;;
+  B002_CODEC) EXTRA_CFLAGS+=("-DCODEC_BUG_B002=1") ;;
   B003_CODEC) EXTRA_CFLAGS+=("-DCODEC_BUG_B003=1") ;;
   *)
     echo "Unknown or unsupported WASI bug variant: $BUG_ID"

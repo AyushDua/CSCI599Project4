@@ -32,6 +32,9 @@ declare -a INVOKE_CASE_NAMES=(
   "invoke_ABC"
   "invoke_mixed_0001027f80ff"
   "invoke_byte_ramp_256"
+  "invoke_utf8_e_acute"
+  "invoke_utf8_nihao"
+  "invoke_utf8_euro"
 )
 
 if [[ ! -f "$WASM" ]]; then
@@ -200,6 +203,9 @@ add_case () {
 add_case "stdin_empty" ""
 add_case "stdin_hi" "6869"
 add_case "stdin_ABC" "414243"
+add_case "stdin_utf8_e_acute" "c3a9"
+add_case "stdin_utf8_nihao" "e4bda0e5a5bd"
+add_case "stdin_utf8_euro" "e282ac"
 add_case "stdin_bytes_000102" "000102"
 add_case "single_00" "00"
 add_case "single_ff" "ff"

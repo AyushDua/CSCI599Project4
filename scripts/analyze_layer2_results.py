@@ -128,6 +128,8 @@ def extract_detail_map(details: str):
 
 
 def classify_test_family(base_name: str) -> str:
+    if "utf8" in base_name:
+      return "utf8"
     if base_name.startswith("invoke_"):
       return "invoke"
     if base_name.startswith("stdin_"):

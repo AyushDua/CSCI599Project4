@@ -10,6 +10,59 @@
 #define WASI_EXPORT
 #endif
 
+static int utf8_codepoint_len_if_valid(
+    const uint8_t* in,
+    size_t in_len,
+    size_t* codepoint_len_ptr) {
+  if (!in || !codepoint_len_ptr || in_len == 0) return 0;
+
+  size_t index = 0;
+  size_t codepoint_len = 0;
+  int has_multibyte = 0;
+
+  while (index < in_len) {
+    const uint8_t byte = in[index];
+    size_t width = 0;
+
+    if ((byte & 0x80) == 0x00) {
+      width = 1;
+    } else if ((byte & 0xE0) == 0xC0) {
+      width = 2;
+    } else if ((byte & 0xF0) == 0xE0) {
+      width = 3;
+    } else if ((byte & 0xF8) == 0xF0) {
+      width = 4;
+    } else {
+      return 0;
+    }
+
+    if (index + width > in_len) return 0;
+
+    for (size_t offset = 1; offset < width; offset++) {
+      if ((in[index + offset] & 0xC0) != 0x80) return 0;
+    }
+
+    if (width > 1) has_multibyte = 1;
+    codepoint_len += 1;
+    index += width;
+  }
+
+  if (!has_multibyte) return 0;
+
+  *codepoint_len_ptr = codepoint_len;
+  return 1;
+}
+
+static size_t effective_input_len(const uint8_t* in, size_t in_len) {
+#if defined(CODEC_BUG_B002)
+  size_t codepoint_len = 0;
+  if (utf8_codepoint_len_if_valid(in, in_len, &codepoint_len)) {
+    return codepoint_len;
+  }
+#endif
+  return in_len;
+}
+
 static int encode_bytes(
     const uint8_t* in,
     size_t in_len,
@@ -17,13 +70,14 @@ static int encode_bytes(
     size_t* out_len_ptr) {
   if (!out_ptr || !out_len_ptr) return 4;
 
-  const size_t need = codec_hex_encode_out_len(in_len);
+  const size_t effective_len = effective_input_len(in, in_len);
+  const size_t need = codec_hex_encode_out_len(effective_len);
   const size_t alloc_size = need > 0 ? need : 1;
   char* out = (char*)malloc(alloc_size);
   if (!out) return 2;
 
   size_t out_len = 0;
-  codec_status_t st = codec_hex_encode(in, in_len, out, need, &out_len);
+  codec_status_t st = codec_hex_encode(in, effective_len, out, need, &out_len);
   if (st != CODEC_OK) {
     free(out);
     return 10 + (int)st;
@@ -86,6 +140,21 @@ WASI_EXPORT int codec_wasi_invoke_case(int case_id) {
       return compare_case(bytes, sizeof(bytes), expected, sizeof(expected));
     }
 
+    case 5: {
+      static const uint8_t e_acute[] = {0xc3, 0xa9};
+      return compare_case(e_acute, sizeof(e_acute), "c3a9", 4);
+    }
+
+    case 6: {
+      static const uint8_t ni_hao[] = {0xe4, 0xbd, 0xa0, 0xe5, 0xa5, 0xbd};
+      return compare_case(ni_hao, sizeof(ni_hao), "e4bda0e5a5bd", 12);
+    }
+
+    case 7: {
+      static const uint8_t euro[] = {0xe2, 0x82, 0xac};
+      return compare_case(euro, sizeof(euro), "e282ac", 6);
+    }
+
     default:
       return 64;
   }
@@ -93,7 +162,7 @@ WASI_EXPORT int codec_wasi_invoke_case(int case_id) {
 
 /* Jimmy: Case-count export for the layer 2 Wasmtime harness. */
 WASI_EXPORT int codec_wasi_case_count(void) {
-  return 5;
+  return 8;
 }
 
 int main(void) {
