@@ -7,6 +7,21 @@ EMSDK_DIR="$TOOLS_DIR/emsdk"
 
 mkdir -p "$TOOLS_DIR"
 
+# Detect python — try python first, verify it actually runs (Windows Store
+# stub reports as found but exits 49 without executing anything).
+PYTHON="${PYTHON:-}"
+if [[ -z "$PYTHON" ]]; then
+  if command -v python >/dev/null 2>&1 && python -c "" >/dev/null 2>&1; then
+    PYTHON="python"
+  elif command -v python3 >/dev/null 2>&1 && python3 -c "" >/dev/null 2>&1; then
+    PYTHON="python3"
+  else
+    echo "python not found on PATH"
+    exit 2
+  fi
+fi
+export PYTHON
+
 if [[ ! -d "$EMSDK_DIR" ]]; then
   echo "Cloning emsdk..."
   git clone https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
@@ -18,9 +33,9 @@ fi
 cd "$EMSDK_DIR"
 
 # Use `python emsdk.py` directly to avoid the `./emsdk` shebang requiring python3.
-python emsdk.py update-tags
-python emsdk.py install latest
-python emsdk.py activate latest
+"$PYTHON" emsdk.py update-tags
+"$PYTHON" emsdk.py install latest
+"$PYTHON" emsdk.py activate latest
 
 # --- Locate emsdk's bundled python and emcc.py ---
 EMSDK_PYTHON="$(find "$EMSDK_DIR/python" -maxdepth 3 -name "python.exe" | head -1)"

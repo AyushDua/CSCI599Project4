@@ -47,8 +47,12 @@ case "$BUG_ID" in
     cp "$ROOT_DIR/src/codec_B003.c" "$ROOT_DIR/src/codec.c"
     RESTORE_CODEC_C=1
     ;;
-  CLEAN_CODEC)
+  CLEAN_CODEC|CLEAN_PARSER|CLEAN_STATS)
     echo "[test_web] Running clean (no bug injected)"
+    ;;
+  Q001_PARSER|Q002_PARSER|Q003_PARSER|Q004_PARSER|\
+  S001_STATS|S002_STATS|S003_STATS|S004_STATS)
+    echo "[test_web] $BUG_ID — compile-time flag injected by build_web.sh"
     ;;
   *)
     echo "[test_web] WARNING: unknown BUG_ID '$BUG_ID' — running clean build"
