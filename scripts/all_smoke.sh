@@ -34,7 +34,7 @@ python3 scripts/analyze_layer2_results.py --no-render-chart --no-open-chart
   CLEAN_PARSER:. Q001_PARSER:. Q002_PARSER:. Q003_PARSER:. Q004_PARSER:. \
   CLEAN_STATS:. S001_STATS:. S002_STATS:. S003_STATS:. S004_STATS:.
   
-python3 scripts/analyze_layer3_results.py --csv results/run_results.csv --no-render-chart --no-open-chart
+python3 scripts/analyze_layer3_results.py results/run_results.csv --no-render-chart --no-open-chart
 
 
 # Layer 1 charts
