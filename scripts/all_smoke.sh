@@ -13,6 +13,9 @@ MODULE=stats  ./scripts/test_native.sh
 
 ./scripts/test_web.sh
 
+# Layer 1 charts
+python3 scripts/render_layer1_chart.py
+
 # Cross-layer analysis and ML classification
 python3 scripts/analyze_cross_layer.py
 python3 scripts/ml_bug_classifier.py
