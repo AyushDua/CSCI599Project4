@@ -440,3 +440,256 @@ test('WebAssembly.Memory is accessible via _Module.HEAPU8  [cross-browser Wasm A
   });
   expect(result).toBe(true);
 });
+
+// ---------------------------------------------------------------------------
+// Parser — baseline happy-path
+// ---------------------------------------------------------------------------
+
+test('parseCSVField("hello,world", 0) => "hello"', async ({ page }) => {
+  const out = await page.evaluate(() => window.parseCSVField("hello,world", 0));
+  expect(out).toBe("hello");
+});
+
+test('parseCSVField("hello,world", 1) => "world"', async ({ page }) => {
+  const out = await page.evaluate(() => window.parseCSVField("hello,world", 1));
+  expect(out).toBe("world");
+});
+
+test('parseCSVField quoted field strips surrounding quotes  [baseline]', async ({ page }) => {
+  // "quoted field",next  →  field 0 should be "quoted field" without quotes
+  const out = await page.evaluate(() => window.parseCSVField('"quoted field",next', 0));
+  expect(out).toBe("quoted field");
+});
+
+test('countCSVFields("a,b,c") => 3  [baseline]', async ({ page }) => {
+  const count = await page.evaluate(() => window.countCSVFields("a,b,c"));
+  expect(count).toBe(3);
+});
+
+// ---------------------------------------------------------------------------
+// Q001 detector — off-by-one null terminator writes one byte past field_cap
+//
+// When field exactly fills the output buffer (wpos == field_cap at null-term
+// time), clean code returns PARSER_ERR_OUTPUT_TOO_SMALL.  Q001 instead writes
+// '\0' at field_out[field_cap], clobbering the sentinel byte placed there.
+// ---------------------------------------------------------------------------
+
+test('Q001 detector: undersized output buffer returns error, sentinel untouched', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const m = window._Module;
+    const csv = "hello";  // 5 chars — fills a cap-5 buffer with no room for '\0'
+    const bytes = new TextEncoder().encode(csv);
+    const inPtr = m._malloc(bytes.length);
+    m.HEAPU8.set(bytes, inPtr);
+
+    const outPtr = m._malloc(7);   // allocate 7 but tell C only 5
+    m.HEAPU8[outPtr + 5] = 0xAB;  // sentinel at the exact OOB write position
+    m.HEAPU8[outPtr + 6] = 0xCD;
+
+    const ret = m._parser_get_field_z(inPtr, bytes.length, 0, outPtr, 5);
+    m._free(inPtr);
+    const sentinel = m.HEAPU8[outPtr + 5];
+    m._free(outPtr);
+    return { ret, sentinel };
+  });
+  // Clean: ret < 0 (PARSER_ERR_OUTPUT_TOO_SMALL), sentinel intact (0xAB).
+  // Q001: ret >= 0 (success), sentinel corrupted to 0x00.
+  expect(result.ret).toBeLessThan(0);
+  expect(result.sentinel).toBe(0xAB);
+});
+
+test('Q001 detector: one-byte field in one-byte buffer returns error', async ({ page }) => {
+  // Single character "A" needs cap >= 2 (char + null). With cap=1, clean code
+  // returns error at null-term; Q001 writes past the buffer.
+  const result = await page.evaluate(() => {
+    const m = window._Module;
+    const bytes = new TextEncoder().encode("A");
+    const inPtr = m._malloc(1);
+    m.HEAPU8.set(bytes, inPtr);
+    const outPtr = m._malloc(3);
+    m.HEAPU8[outPtr + 1] = 0xBB;  // sentinel
+    const ret = m._parser_get_field_z(inPtr, 1, 0, outPtr, 1);
+    m._free(inPtr);
+    const sentinel = m.HEAPU8[outPtr + 1];
+    m._free(outPtr);
+    return { ret, sentinel };
+  });
+  expect(result.ret).toBeLessThan(0);
+  expect(result.sentinel).toBe(0xBB);
+});
+
+// ---------------------------------------------------------------------------
+// Q002 detector — comma not advanced after unquoted field
+//
+// After parsing "a" from "a,b", Q002 leaves *in_pos pointing at the comma.
+// The next call starts at the comma and returns an empty string instead of "b".
+// ---------------------------------------------------------------------------
+
+test('Q002 detector: second field of "a,b" should be "b" not empty string', async ({ page }) => {
+  const out = await page.evaluate(() => window.parseCSVField("a,b", 1));
+  expect(out).toBe("b");  // Q002 returns ""
+});
+
+test('Q002 detector: third field of "x,y,z" should be "z"', async ({ page }) => {
+  const out = await page.evaluate(() => window.parseCSVField("x,y,z", 2));
+  expect(out).toBe("z");  // Q002 never advances, always re-reads from the comma
+});
+
+// ---------------------------------------------------------------------------
+// Q003 detector — null in_pos dereferences null pointer → Wasm trap
+//
+// parser_next_field_raw_z passes in_pos directly to csv_next_field.
+// Clean code checks in_pos for null and returns PARSER_ERR_NULL.
+// Q003 skips the check and dereferences address 0 → Wasm memory trap.
+// ---------------------------------------------------------------------------
+
+test('Q003 detector: null in_pos returns error code, no wasm trap', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(err.message));
+
+  const result = await page.evaluate(() => {
+    const m = window._Module;
+    const bytes = new TextEncoder().encode("hello");
+    const inPtr = m._malloc(bytes.length);
+    m.HEAPU8.set(bytes, inPtr);
+    const outPtr = m._malloc(32);
+    // in_pos = 0 (null Wasm pointer) — triggers Q003
+    const ret = m._parser_next_field_raw_z(inPtr, bytes.length, 0, outPtr, 32);
+    m._free(inPtr);
+    m._free(outPtr);
+    return ret;
+  });
+
+  expect(result).toBeLessThan(0);   // clean returns PARSER_ERR_NULL; Q003 traps
+  expect(errors).toHaveLength(0);   // Q003 produces a pageerror here
+});
+
+// ---------------------------------------------------------------------------
+// Q004 detector — closing quote absorbed as field content
+//
+// For a quoted field like "hello", clean code strips the surrounding quotes
+// and returns "hello".  Q004 never detects the closing '"' as a terminator,
+// so the output includes the closing quote: 'hello"'.
+// ---------------------------------------------------------------------------
+
+test('Q004 detector: quoted field should not include closing quote', async ({ page }) => {
+  // Input: "hello"  (the whole CSV string is one quoted field)
+  const out = await page.evaluate(() => window.parseCSVField('"hello"', 0));
+  expect(out).toBe("hello");   // Q004 returns 'hello"'
+});
+
+test('Q004 detector: quoted field with comma inside is parsed correctly', async ({ page }) => {
+  // "a,b",c  →  field 0 = "a,b", field 1 = "c"
+  // Q004 never exits the quoted path at '"', so it reads past it and misparses.
+  const field0 = await page.evaluate(() => window.parseCSVField('"a,b",c', 0));
+  expect(field0).toBe("a,b");
+});
+
+// ---------------------------------------------------------------------------
+// Stats — baseline happy-path
+// ---------------------------------------------------------------------------
+
+test('statsSum([1, 2, 3]) => 6  [baseline]', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsSum([1, 2, 3]));
+  expect(result).toBe(6);
+});
+
+test('statsMin([3, 1, 2]) => 1  [baseline]', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsMin([3, 1, 2]));
+  expect(result).toBe(1);
+});
+
+test('statsMax([3, 1, 2]) => 3  [baseline]', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsMax([3, 1, 2]));
+  expect(result).toBe(3);
+});
+
+test('statsMean([1.0, 2.0, 3.0]) => 2.0  [baseline]', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsMean([1.0, 2.0, 3.0]));
+  expect(result).toBeCloseTo(2.0);
+});
+
+test('statsDot([1, 2, 3], [1, 1, 1]) => 6  [baseline]', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsDot([1, 2, 3], [1, 1, 1]));
+  expect(result).toBeCloseTo(6.0);
+});
+
+// ---------------------------------------------------------------------------
+// S001 detector — int32 accumulator overflows on large sum
+//
+// Clean code accumulates into int64; S001 uses int32, so adding 1 to
+// INT32_MAX wraps to -2147483647 instead of producing 2147483648.
+// ---------------------------------------------------------------------------
+
+test('S001 detector: sum of [INT32_MAX, 1] should be 2147483648', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsSum([2147483647, 1]));
+  expect(result).toBe(2147483648);  // S001 returns -2147483647 (int32 wrap)
+});
+
+test('S001 detector: sum of large repeated values does not overflow', async ({ page }) => {
+  // 10 × 1000000000 = 10000000000, which exceeds INT32_MAX (2147483647).
+  const result = await page.evaluate(() =>
+    window.statsSum([1000000000, 1000000000, 1000000000, 1000000000,
+                     1000000000, 1000000000, 1000000000, 1000000000,
+                     1000000000, 1000000000])
+  );
+  expect(result).toBe(10000000000);  // S001 overflows silently
+});
+
+// ---------------------------------------------------------------------------
+// S002 detector — mean divides by n-1 instead of n (sample vs population)
+//
+// For [1, 2, 3]: correct population mean = 6/3 = 2.0.
+//                S002 sample mean         = 6/2 = 3.0.
+// ---------------------------------------------------------------------------
+
+test('S002 detector: mean of [1, 2, 3] should be 2.0 not 3.0', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsMean([1.0, 2.0, 3.0]));
+  expect(result).toBeCloseTo(2.0);  // S002 returns 3.0
+});
+
+test('S002 detector: mean of [0, 0, 0, 0, 4] should be 0.8 not 1.0', async ({ page }) => {
+  // sum=4, n=5: population mean=0.8; sample mean (n-1=4): 4/4=1.0
+  const result = await page.evaluate(() => window.statsMean([0.0, 0.0, 0.0, 0.0, 4.0]));
+  expect(result).toBeCloseTo(0.8);  // S002 returns 1.0
+});
+
+// ---------------------------------------------------------------------------
+// S003 detector — null array pointer in stats_min_i32 causes Wasm trap
+//
+// Clean code returns STATS_ERR_NULL (-2147483648 sentinel from stats_min_z).
+// S003 skips the null check and dereferences address 0 → Wasm trap.
+// ---------------------------------------------------------------------------
+
+test('S003 detector: null array pointer returns error code, no wasm trap', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(err.message));
+
+  const result = await page.evaluate(() => {
+    const m = window._Module;
+    // arr=0 (null Wasm pointer), n=1 — triggers S003 on buggy build
+    return m._stats_min_z(0, 1);
+  });
+
+  // Clean: returns 0x80000000 = -2147483648 (STATS_ERR sentinel); S003 traps.
+  expect(result).toBe(-2147483648);
+  expect(errors).toHaveLength(0);  // S003 produces a pageerror here
+});
+
+// ---------------------------------------------------------------------------
+// S004 detector — dot product loop processes only n/2 elements
+//
+// [1,2,3,4] · [1,1,1,1] = 10.  S004 processes only first 4/2=2 elements:
+// 1×1 + 2×1 = 3.
+// ---------------------------------------------------------------------------
+
+test('S004 detector: dot product of [1,2,3,4] and [1,1,1,1] should be 10', async ({ page }) => {
+  const result = await page.evaluate(() => window.statsDot([1, 2, 3, 4], [1, 1, 1, 1]));
+  expect(result).toBeCloseTo(10.0);  // S004 returns 3.0
+});
+
+test('S004 detector: dot product of 6-element arrays uses all elements', async ({ page }) => {
+  // [1,2,3,4,5,6] · [1,1,1,1,1,1] = 21.  S004 uses n/2=3: 1+2+3=6.
+  const result = await page.evaluate(() => window.statsDot([1, 2, 3, 4, 5, 6], [1, 1, 1, 1, 1, 1]));
+  expect(result).toBeCloseTo(21.0);  // S004 returns 6.0
+});

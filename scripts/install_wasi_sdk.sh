@@ -6,13 +6,14 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/.tools"
 mkdir -p "$TOOLS_DIR"
 
-# Windows Git Bash compatibility
+# Detect python — try python first, verify it actually runs (Windows Store
+# stub reports as found but exits 49 without executing anything).
 PYTHON="${PYTHON:-}"
 if [[ -z "$PYTHON" ]]; then
-  if command -v python3 >/dev/null 2>&1; then
-    PYTHON="python3"
-  elif command -v python >/dev/null 2>&1; then
+  if command -v python >/dev/null 2>&1 && python -c "" >/dev/null 2>&1; then
     PYTHON="python"
+  elif command -v python3 >/dev/null 2>&1 && python3 -c "" >/dev/null 2>&1; then
+    PYTHON="python3"
   else
     echo "python not found on PATH"
     exit 2
@@ -31,20 +32,23 @@ else
 fi
 
 # Detect OS for release artifact naming.
+# Git Bash on Windows reports uname -s as MINGW64_NT-... or MSYS_NT-...
 KERNEL="$(uname -s)"
 if [[ "$KERNEL" == "Darwin" ]]; then
   WASI_OS="macos"
 elif [[ "$KERNEL" == "Linux" ]]; then
   WASI_OS="linux"
+elif [[ "$KERNEL" == MINGW* ]] || [[ "$KERNEL" == MSYS* ]] || [[ "$KERNEL" == CYGWIN* ]]; then
+  WASI_OS="windows"
 else
   echo "Unsupported OS kernel: $KERNEL"
-  echo "Use a macOS/Linux shell (including WSL) to install wasi-sdk for this project."
+  echo "Run from macOS, Linux, WSL, or Git Bash on Windows."
   exit 1
 fi
 
 # Get latest WASI SDK major version number from GitHub API (e.g., wasi-sdk-27).
 LATEST_TAG="$(curl -s https://api.github.com/repos/WebAssembly/wasi-sdk/releases/latest | \
-  "${PYTHON:-python3}" -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")"
+  "$PYTHON" -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")"
 
 # Extract the numeric version from tag: "wasi-sdk-27" -> "27"
 WASI_VERSION="${LATEST_TAG#wasi-sdk-}"
